@@ -95,4 +95,14 @@ class PegSolitaire {
     printEligibleMovesForSetup(): void {
         console.log(this.eligibleMoves);
     }
+
+    findLegalMoves(): Move[] {
+        let listOfMoves: Move[] = [];
+        this.eligibleMoves.forEach((move) => {
+            if (this.checkLegalityOfEligibleMove(move)) listOfMoves.push(move);
+        });
+        return listOfMoves;
+    };
 };
+
+export default PegSolitaire;
