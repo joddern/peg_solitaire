@@ -1,4 +1,4 @@
-enum BoardElement {
+export enum BoardElement {
     Empty = 0,
     Ball = 1, 
     Restricted = 2,
@@ -9,14 +9,14 @@ type BoardCoord = {
     y: number,
 }
 
-type Move = {
+export type Move = {
     from: BoardCoord,
     to: BoardCoord,
 }
 
-const STANDARD_BOARD_WIDTH = 7;
-const STANDARD_BOARD_HEIGHT = 7;
-const STANDARD_BOARD_SETUP = [
+const STANDARD_BOARD_WIDTH: number = 7;
+const STANDARD_BOARD_HEIGHT: number = 7;
+const STANDARD_BOARD_SETUP: BoardElement[][] = [
     [BoardElement.Restricted, BoardElement.Restricted, BoardElement.Ball, BoardElement.Ball, BoardElement.Ball, BoardElement.Restricted, BoardElement.Restricted],
     [BoardElement.Restricted, BoardElement.Ball, BoardElement.Ball, BoardElement.Ball, BoardElement.Ball, BoardElement.Ball, BoardElement.Restricted],
     [BoardElement.Ball, BoardElement.Ball, BoardElement.Ball, BoardElement.Ball, BoardElement.Ball, BoardElement.Ball, BoardElement.Ball],
@@ -26,11 +26,12 @@ const STANDARD_BOARD_SETUP = [
     [BoardElement.Restricted, BoardElement.Restricted, BoardElement.Ball, BoardElement.Ball, BoardElement.Ball, BoardElement.Restricted, BoardElement.Restricted],
 ];
 
-class PegSolitaire {
+export default class PegSolitaire {
     private boardWidth: number;
     private boardHeight: number;
     private board: BoardElement[][];
     private eligibleMoves: Move[];
+    private nonRestrictedCoordinates: BoardCoord[];
 
     constructor(
         boardWidth: number = STANDARD_BOARD_WIDTH, 
@@ -42,6 +43,11 @@ class PegSolitaire {
         this.boardHeight=boardHeight;
         this.board=board;
         this.eligibleMoves = this.findEligibleMovesForSetup();
+        this.nonRestrictedCoordinates = this.findNonRestrictedCoords();
+    }
+
+    getBoard(): BoardElement[][] {
+        return this.board;
     }
 
     removeBall({ x, y }: BoardCoord): void {
@@ -77,6 +83,12 @@ class PegSolitaire {
         this.board[to.y][to.x] = BoardElement.Ball;
     };
 
+    undoMove({ from, to }: Move): void {
+        this.board[from.y][from.x] = BoardElement.Ball;
+        this.board[(to.y + from.y) / 2][(to.x + from.x) / 2] = BoardElement.Ball;
+        this.board[to.y][to.x] = BoardElement.Empty;
+    };
+
     findEligibleMovesForSetup(): Move[] {
         let listOfMoves: Move[] = [];
         for (let row = 0; row < this.boardHeight ; row++) {
@@ -94,6 +106,24 @@ class PegSolitaire {
         console.log(this.eligibleMoves);
     }
 
+    findNonRestrictedCoords(): BoardCoord[] {
+        let listOfCoords: BoardCoord[] = [];
+        for (let row = 0; row < this.boardHeight ; row++) {
+            for (let col = 0; col < this.boardWidth ; col++) {
+                if (this.board[row][col] != BoardElement.Restricted) listOfCoords.push({ x: col, y: row});
+            }
+        }
+        return listOfCoords;
+    }
+
+    countBalls(): number {
+        let ballCount: number = 0;
+        this.nonRestrictedCoordinates.forEach( ({ x, y }) => {
+            if (this.board[y][x] == BoardElement.Ball) ballCount++;
+        });
+        return ballCount;
+    }
+
     findLegalMoves(): Move[] {
         let listOfMoves: Move[] = [];
         this.eligibleMoves.forEach((move) => {
@@ -102,5 +132,3 @@ class PegSolitaire {
         return listOfMoves;
     };
 };
-
-export default PegSolitaire;
