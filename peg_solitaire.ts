@@ -1,5 +1,3 @@
-
-
 enum BoardElement {
     Empty = 0,
     Ball = 1, 
