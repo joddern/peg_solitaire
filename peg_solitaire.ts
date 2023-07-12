@@ -29,37 +29,44 @@ const STANDARD_BOARD_SETUP = [
 ];
 
 class PegSolitaire {
-    private board_width: number;
-    private board_height: number;
+    private boardWidth: number;
+    private boardHeight: number;
     private board: BoardElement[][];
+    private eligibleMoves: Move[];
 
     constructor(
-        board_width: number = STANDARD_BOARD_WIDTH, 
-        board_height: number = STANDARD_BOARD_HEIGHT, 
+        boardWidth: number = STANDARD_BOARD_WIDTH, 
+        boardHeight: number = STANDARD_BOARD_HEIGHT, 
         board: BoardElement[][] = STANDARD_BOARD_SETUP,
         )
     {
-        this.board_width=board_width;
-        this.board_height=board_height;
+        this.boardWidth=boardWidth;
+        this.boardHeight=boardHeight;
         this.board=board;
+        this.eligibleMoves = this.findEligibleMovesForSetup();
     }
 
     removeBall({ x, y }: BoardCoord): void {
-        if (x < 0 || x >= this.board_width || 
-            y < 0 || y >= this.board_height) throw new Error(`Tried removeBall outside of board: x:${x}, y:${y}.`);
+        if (x < 0 || x >= this.boardWidth || 
+            y < 0 || y >= this.boardHeight) throw new Error(`Tried removeBall outside of board: x:${x}, y:${y}.`);
         if (this.board[y][x] == BoardElement.Restricted) throw new Error(`Tried removeBall on restricted coordinate: x:${x}, y:${y}.`);
         if (this.board[y][x] == BoardElement.Empty) throw new Error(`Tried removing on empty coordinate: x:${x}, y:${y}.`);
         this.board[y][x] = BoardElement.Empty;
     };
 
-    checkMove({ from, to }: Move): boolean {
-        if (from.x < 0 || from.x >= this.board_width || 
-            from.y < 0 || from.y >= this.board_height || 
-            to.x < 0 || to.x >= this.board_width || 
-            to.y < 0 || to.y >= this.board_height) return false;
+    checkIfEligibleMove({ from, to }: Move): boolean {
+        if (from.x < 0 || from.x >= this.boardWidth || 
+            from.y < 0 || from.y >= this.boardHeight || 
+            to.x < 0 || to.x >= this.boardWidth || 
+            to.y < 0 || to.y >= this.boardHeight) return false;
         if (Math.sqrt((to.x - from.x)**2 + (to.y - from.y)**2) != 2) return false;
         if (this.board[from.y][from.x] == BoardElement.Restricted ||
-            this.board[to.y][to.x] == BoardElement.Restricted) return false;
+            this.board[to.y][to.x] == BoardElement.Restricted ||
+            this.board[(to.y + from.y) / 2][(to.x + from.x) / 2] == BoardElement.Restricted) return false;
+        return true;
+    };
+
+    checkLegalityOfEligibleMove({ from, to }: Move): boolean {
         if (this.board[from.y][from.x] != BoardElement.Ball) return false;
         if (this.board[to.y][to.x] != BoardElement.Empty) return false;
         if (this.board[(to.y + from.y) / 2][(to.x + from.x) / 2] != BoardElement.Ball) return false;
@@ -72,18 +79,20 @@ class PegSolitaire {
         this.board[to.y][to.x] = BoardElement.Ball;
     };
 
-    findAllLegalMoves(): Move[] {
+    findEligibleMovesForSetup(): Move[] {
         let listOfMoves: Move[] = [];
-        for (let row = 0; row < this.board_height ; row++) {
-            for (let col = 0; col < this.board_width ; col++) {
-                if (this.checkMove({from: {x: col, y: row}, to: {x: col - 2, y: row}})) listOfMoves.push({from: {x: col, y: row}, to: {x: col - 2, y: row}});
-                if (this.checkMove({from: {x: col, y: row}, to: {x: col + 2, y: row}})) listOfMoves.push({from: {x: col, y: row}, to: {x: col + 2, y: row}});
-                if (this.checkMove({from: {x: col, y: row}, to: {x: col, y: row - 2}})) listOfMoves.push({from: {x: col, y: row}, to: {x: col, y: row - 2}});
-                if (this.checkMove({from: {x: col, y: row}, to: {x: col, y: row + 2}})) listOfMoves.push({from: {x: col, y: row}, to: {x: col, y: row + 2}});
+        for (let row = 0; row < this.boardHeight ; row++) {
+            for (let col = 0; col < this.boardWidth ; col++) {
+                if (this.checkIfEligibleMove({from: {x: col, y: row}, to: {x: col - 2, y: row}})) listOfMoves.push({from: {x: col, y: row}, to: {x: col - 2, y: row}});
+                if (this.checkIfEligibleMove({from: {x: col, y: row}, to: {x: col + 2, y: row}})) listOfMoves.push({from: {x: col, y: row}, to: {x: col + 2, y: row}});
+                if (this.checkIfEligibleMove({from: {x: col, y: row}, to: {x: col, y: row - 2}})) listOfMoves.push({from: {x: col, y: row}, to: {x: col, y: row - 2}});
+                if (this.checkIfEligibleMove({from: {x: col, y: row}, to: {x: col, y: row + 2}})) listOfMoves.push({from: {x: col, y: row}, to: {x: col, y: row + 2}});
             }
         }
         return listOfMoves;
-    };
+    }
 
-    findBoardSetupMoves
+    printEligibleMovesForSetup(): void {
+        console.log(this.eligibleMoves);
+    }
 };
