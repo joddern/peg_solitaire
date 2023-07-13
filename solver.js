@@ -1,90 +1,72 @@
-import PegSolitaire, { Move, BoardElement } from "./peg_solitaire";
-
-export type Board = {
-    board: BoardElement[][];
-} 
-
-export default class Solver {
-    private gameBoard: PegSolitaire;
-    private solutionSet: Move[];
-    private unsolvablePositions: Board[];
-    private ballsThreshold: number;
-
-    private movesCounter: number;
-
-    constructor(
-        gameBoard: PegSolitaire, 
-        ballsThreshold: number,
-        )
-    {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var Solver = /** @class */ (function () {
+    function Solver(gameBoard, ballsThreshold) {
         this.gameBoard = gameBoard;
         this.solutionSet = [];
         this.unsolvablePositions = [];
         this.ballsThreshold = ballsThreshold;
         this.movesCounter = 0;
-    };
-    
+    }
+    ;
     // Solver function must:
     // Find all possible moves right now:
     // - for each of these moves, play it, then recursively look for new moves
     // Stop if there is only a few balls left.
     // When there there are no possible moves, check how many balls are left
     // No moves then remove the last done move
-    isUnsolvable(board: Board): boolean {
-        this.unsolvablePositions.forEach((unsolvableBoard) => {
-            if (areBoardsEqual(board, unsolvableBoard)) return true;
+    Solver.prototype.isUnsolvable = function (board) {
+        this.unsolvablePositions.forEach(function (unsolvableBoard) {
+            if (areBoardsEqual(board, unsolvableBoard))
+                return true;
         });
         return false;
     };
-
-    addMove(move: Move) {
+    ;
+    Solver.prototype.addMove = function (move) {
         this.gameBoard.doMove(move);
         this.solutionSet.push(move);
-    }
-
-    removeMove(move: Move) {
+    };
+    Solver.prototype.removeMove = function (move) {
         this.gameBoard.undoMove(move);
         this.solutionSet.pop(); // Only removes last, good enough?
-    }
-
-    solveGame(): boolean {
-
-        const possibleMoves: Move[] = this.gameBoard.findLegalMoves();
-
+    };
+    Solver.prototype.solveGame = function () {
+        var possibleMoves = this.gameBoard.findLegalMoves();
         // Check how many balls left after a move
-        if (this.gameBoard.countBalls() <= this.ballsThreshold) return true;
-
+        if (this.gameBoard.countBalls() <= this.ballsThreshold)
+            return true;
         // Check if this position is unsolvable
         if (this.isUnsolvable({ board: this.gameBoard.getBoard() }) ||
-            possibleMoves.length === 0) return false;
-
-        for (let i = 0 ; i < possibleMoves.length ; i++) {
-            const currentMove: Move = possibleMoves[i];
+            possibleMoves.length === 0)
+            return false;
+        for (var i = 0; i < possibleMoves.length; i++) {
+            var currentMove = possibleMoves[i];
             this.addMove(currentMove);
             console.log(this.movesCounter++);
-            
             // Since there are more balls left and possible moves, reccur
-            const gameSolved: boolean = this.solveGame();
-            if (gameSolved) return true;
-
+            var gameSolved = this.solveGame();
+            if (gameSolved)
+                return true;
             // If the game has returned not true, then go back one step
             this.removeMove(currentMove);
         }
-
         // If all moves are checked, none returned true games, then return further
         // TODO: 
         // This should also add a board to unSolvableBoard. 
         this.unsolvablePositions.push({ board: this.gameBoard.getBoard() });
         return false;
     };
-
-    printSolutionSet(): void {
+    ;
+    Solver.prototype.printSolutionSet = function () {
         console.log(this.solutionSet);
         console.log(this.unsolvablePositions.length);
-    }
-
-};
-
-function areBoardsEqual(board1: Board, board2: Board): boolean {
+    };
+    return Solver;
+}());
+exports.default = Solver;
+;
+function areBoardsEqual(board1, board2) {
     return JSON.stringify(board1) == JSON.stringify(board2);
-};
+}
+;
