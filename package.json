@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "typescript": "^5.1.6"
-  },
-  "scripts": {
-    "start": "npx tsc && node dist/main.js"
-  }
-}
