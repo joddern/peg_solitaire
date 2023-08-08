@@ -18,7 +18,7 @@ type Coord = {
 const Game = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedPeg, setSelectedPeg] = useState<Coord | null>(null);
-  // Define the game board (1 for peg, 0 for empty)
+  // Define the game board (1 for peg, 0 for empty, 2 for restricted field)
   const [board, setBoard] = useState([
     [0, 0, 1, 1, 1, 0, 0],
     [0, 0, 1, 1, 1, 0, 0],
@@ -28,6 +28,8 @@ const Game = () => {
     [0, 0, 1, 1, 1, 0, 0],
     [0, 0, 1, 1, 1, 0, 0],
   ]);
+  const [changeBoardMode, setChangeBoardMode] = useState<boolean>(false);
+  const [changePegsMode, setChangePegsMode] = useState<boolean>(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -105,13 +107,36 @@ const Game = () => {
       spacing + pegRadius + y_index * (2 * pegRadius + spacing);
 
     // Check if within circle and that there is a peg in the circle
-    if (
-      Math.sqrt((y - y_centered) ** 2 + (x - x_centered) ** 2) <= pegRadius &&
-      board[y_index][x_index] === 1
-    ) {
-      setSelectedPeg({ x: x_index, y: y_index });
-      console.log("selected_peg set:", { x: x_index, y: y_index });
-      return;
+    if (Math.sqrt((y - y_centered) ** 2 + (x - x_centered) ** 2) <= pegRadius) {
+      if (changeBoardMode) {
+        const board_copy = board.slice();
+        if (
+          board_copy[y_index][x_index] === 1 ||
+          board_copy[y_index][x_index] === 0
+        ) {
+          board_copy[y_index][x_index] = 2;
+        } else if (board_copy[y_index][x_index] === 2) {
+          board_copy[y_index][x_index] = 1;
+        }
+        setBoard(board_copy);
+        return;
+      } else if (changePegsMode) {
+        const board_copy = board.slice();
+        if (board_copy[y_index][x_index] === 1) {
+          board_copy[y_index][x_index] = 0;
+        } else if (board_copy[y_index][x_index] === 0) {
+          board_copy[y_index][x_index] = 1;
+        }
+        setBoard(board_copy);
+        return;
+      }
+
+      // Normal play
+      if (board[y_index][x_index] === 1) {
+        setSelectedPeg({ x: x_index, y: y_index });
+        console.log("selected_peg set:", { x: x_index, y: y_index });
+        return;
+      }
     }
     setSelectedPeg(null);
   };
@@ -119,6 +144,36 @@ const Game = () => {
   return (
     <div>
       <button onClick={updateBoardSomeWhat}> Change random peg </button>
+      <button
+        className="ml-12 mr-12 mt-12 mb-12"
+        style={
+          changeBoardMode
+            ? { backgroundColor: "green", color: "black" }
+            : { backgroundColor: "white", color: "black" }
+        }
+        onClick={() => {
+          setChangeBoardMode(!changeBoardMode);
+          setChangePegsMode(false);
+        }}
+      >
+        {" "}
+        Change board layout{" "}
+      </button>
+      <button
+        className="ml-10 mr-12 mt-12 mb-12"
+        style={
+          changePegsMode
+            ? { backgroundColor: "green", color: "black" }
+            : { backgroundColor: "white", color: "black" }
+        }
+        onClick={() => {
+          setChangePegsMode(!changePegsMode);
+          setChangeBoardMode(false);
+        }}
+      >
+        {" "}
+        Add or remove pegs{" "}
+      </button>
       <canvas
         ref={canvasRef}
         width={(maxSize + 1) * spacing + 2 * maxSize * pegRadius}
