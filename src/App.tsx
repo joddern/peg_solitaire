@@ -5,7 +5,6 @@ import Game from "./components/GameBoard";
 function App() {
   return (
     <div>
-      <p>Hello!</p>
       <Game />
     </div>
   );

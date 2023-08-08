@@ -1,10 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-
-function getRandomInt(min: number, max: number) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+import { getRandomInt } from "../utils/gameboard";
 
 const maxSize = 7;
 const pegRadius = 20;
@@ -20,13 +15,13 @@ const Game = () => {
   const [selectedPeg, setSelectedPeg] = useState<Coord | null>(null);
   // Define the game board (1 for peg, 0 for empty, 2 for restricted field)
   const [board, setBoard] = useState([
-    [0, 0, 1, 1, 1, 0, 0],
-    [0, 0, 1, 1, 1, 0, 0],
+    [2, 2, 1, 1, 1, 2, 2],
+    [2, 2, 1, 1, 1, 2, 2],
     [1, 1, 1, 1, 1, 1, 1],
     [1, 1, 1, 0, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1],
-    [0, 0, 1, 1, 1, 0, 0],
-    [0, 0, 1, 1, 1, 0, 0],
+    [2, 2, 1, 1, 1, 2, 2],
+    [2, 2, 1, 1, 1, 2, 2],
   ]);
   const [changeBoardMode, setChangeBoardMode] = useState<boolean>(false);
   const [changePegsMode, setChangePegsMode] = useState<boolean>(false);
@@ -69,28 +64,16 @@ const Game = () => {
     }
   }, [board, selectedPeg]);
 
-  function updateBoardSomeWhat() {
-    const rand_x = getRandomInt(0, board[0].length - 1);
-    const rand_y = getRandomInt(0, board.length - 1);
-    const board_copy = board.slice();
-    board_copy[rand_y][rand_x] === 1
-      ? (board_copy[rand_y][rand_x] = 0)
-      : (board_copy[rand_y][rand_x] = 1);
-    setBoard(board_copy);
-  }
-
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    console.log("handleClick called!");
     const canvas = canvasRef.current;
     const rect = canvas?.getBoundingClientRect();
     const x = event.clientX - (rect?.left || 0);
     const y = event.clientY - (rect?.top || 0);
-    console.log("x coord: ", x, ".\ny coord: ", y);
     const rectangleSide = 2 * pegRadius + spacing;
 
     const x_index = Math.floor((x + spacing / 2) / rectangleSide);
     const y_index = Math.floor((y + spacing / 2) / rectangleSide);
-    console.log("x_index: ", x_index, ".\ny_index: ", y_index);
+
     if (
       x_index < 0 ||
       x_index >= board[0].length ||
@@ -143,36 +126,33 @@ const Game = () => {
 
   return (
     <div>
-      <button onClick={updateBoardSomeWhat}> Change random peg </button>
       <button
         className="ml-12 mr-12 mt-12 mb-12"
-        style={
-          changeBoardMode
-            ? { backgroundColor: "green", color: "black" }
-            : { backgroundColor: "white", color: "black" }
-        }
+        style={{
+          color: "black",
+          margin: 4,
+          backgroundColor: changeBoardMode ? "green" : "white",
+        }}
         onClick={() => {
           setChangeBoardMode(!changeBoardMode);
           setChangePegsMode(false);
         }}
       >
-        {" "}
-        Change board layout{" "}
+        Change board layout
       </button>
       <button
         className="ml-10 mr-12 mt-12 mb-12"
-        style={
-          changePegsMode
-            ? { backgroundColor: "green", color: "black" }
-            : { backgroundColor: "white", color: "black" }
-        }
+        style={{
+          color: "black",
+          margin: 4,
+          backgroundColor: changePegsMode ? "green" : "white",
+        }}
         onClick={() => {
           setChangePegsMode(!changePegsMode);
           setChangeBoardMode(false);
         }}
       >
-        {" "}
-        Add or remove pegs{" "}
+        Add or remove pegs
       </button>
       <canvas
         ref={canvasRef}
