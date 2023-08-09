@@ -139,7 +139,9 @@ const Game = () => {
           return;
         }
       }
-      setPlaySequenceMode(false);
+      if (playSequenceMode) {
+        setPlaySequenceMode(false);
+      }
     };
 
     playSequence();
@@ -152,7 +154,7 @@ const Game = () => {
       gameInstance.getHeight(),
       board_copy
     );
-    const newSolverInstance = new Solver(copyOfCurrentGameInstance, 4); // Do not set to 3 or under if full board
+    const newSolverInstance = new Solver(copyOfCurrentGameInstance, 5); // Do not set to 3 or under if full board
     newSolverInstance.solveGame();
     setSequence(newSolverInstance.getSolution());
     setIsSolving(false);
