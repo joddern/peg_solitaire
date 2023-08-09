@@ -76,6 +76,10 @@ export default class Solver {
     return false;
   }
 
+  getSolution(): Move[] {
+    return this.solutionSet;
+  }
+
   printSolutionSet(): void {
     console.log(this.solutionSet);
     console.log(this.unsolvablePositions.length);
@@ -83,5 +87,5 @@ export default class Solver {
 }
 
 function areBoardsEqual(board1: Board, board2: Board): boolean {
-  return JSON.stringify(board1) == JSON.stringify(board2);
+  return JSON.stringify(board1) === JSON.stringify(board2);
 }
