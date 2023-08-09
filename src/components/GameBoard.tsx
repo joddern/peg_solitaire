@@ -11,6 +11,8 @@ export const maxSize = 7;
 export const pegRadius = 20;
 export const spacing = 10;
 
+const pegsLeftCriteria = 5; // Will lag the whole program if too low with too many pieces...
+
 const Game = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -154,7 +156,10 @@ const Game = () => {
       gameInstance.getHeight(),
       board_copy
     );
-    const newSolverInstance = new Solver(copyOfCurrentGameInstance, 5); // Do not set to 3 or under if full board
+    const newSolverInstance = new Solver(
+      copyOfCurrentGameInstance,
+      pegsLeftCriteria
+    );
     newSolverInstance.solveGame();
     setSequence(newSolverInstance.getSolution());
     setIsSolving(false);
@@ -222,7 +227,7 @@ const Game = () => {
             findSolution();
           }}
         >
-          Find solution
+          Find solution for pegs left criteria: {pegsLeftCriteria}
         </button>
       </div>
       <div>
