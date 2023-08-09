@@ -5,6 +5,7 @@ import PegSolitaire, {
   Move,
 } from "../mechanics/peg_solitaire";
 import { drawTheBoard } from "../utils/drawTheBoard";
+import Solver from "../mechanics/solver";
 
 export const maxSize = 7;
 export const pegRadius = 20;
@@ -23,11 +24,16 @@ const Game = () => {
   const gameInstance = new PegSolitaire();
   const [board, setBoard] = useState(gameInstance.getBoard());
 
+  const [isSolving, setIsSolving] = useState<boolean>(false);
+
   useEffect(() => {
     drawTheBoard(canvasRef, board, selectedPeg);
   }, [board, selectedPeg]);
 
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isSolving) {
+      return;
+    }
     const canvas = canvasRef.current;
     const rect = canvas?.getBoundingClientRect();
     const x = event.clientX - (rect?.left || 0);
@@ -54,14 +60,17 @@ const Game = () => {
 
     // Check if within circle
     if (Math.sqrt((y - y_centered) ** 2 + (x - x_centered) ** 2) <= pegRadius) {
+      setPlaySequenceMode(false);
       if (changeBoardMode) {
         gameInstance.toggleRestricted({ x: x_index, y: y_index });
         const board_copy = gameInstance.getBoard().slice();
+        setSequence(null);
         setBoard(board_copy);
         return;
       } else if (changePegsMode) {
         gameInstance.toggleBall({ x: x_index, y: y_index });
         const board_copy = gameInstance.getBoard().slice();
+        setSequence(null);
         setBoard(board_copy);
         return;
       }
@@ -89,6 +98,7 @@ const Game = () => {
             to: { x: x_index, y: y_index },
           });
           const board_copy = gameInstance.getBoard().slice();
+          setSequence(null);
           setBoard(board_copy);
           setSelectedPeg(null);
           return;
@@ -98,14 +108,17 @@ const Game = () => {
     setSelectedPeg(null);
   };
 
-  const playSequence = () => {
-    if (sequence === null || !playSequenceMode) {
-      console.log("Did not play sequence because of upper if sentence :)");
-      return;
-    }
-    sequence?.forEach((move) => {
-      setSelectedPeg(move.from);
-      setTimeout(() => {
+  useEffect(() => {
+    const playSequence = async () => {
+      if (sequence === null) {
+        setPlaySequenceMode(false);
+        return;
+      }
+      for (let i = 0; i < sequence.length; i++) {
+        const move = sequence[i];
+        setSelectedPeg(move.from);
+        const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+        await sleep(1000);
         if (
           gameInstance.checkIfEligibleMove({
             from: move.from,
@@ -114,53 +127,115 @@ const Game = () => {
           gameInstance.checkLegalityOfEligibleMove({
             from: move.from,
             to: move.to,
-          })
+          }) &&
+          playSequenceMode &&
+          sequence !== null
         ) {
           gameInstance.doMove({
             from: move.from,
             to: move.to,
           });
+        } else {
+          return;
         }
-      }, 1000);
-    });
+      }
+      if (playSequenceMode) {
+        setPlaySequenceMode(false);
+      }
+    };
+
+    playSequence();
+  }, [playSequenceMode]);
+
+  const findSolution = () => {
+    const board_copy = JSON.parse(JSON.stringify(board));
+    const copyOfCurrentGameInstance = new PegSolitaire(
+      gameInstance.getWidth(),
+      gameInstance.getHeight(),
+      board_copy
+    );
+    const newSolverInstance = new Solver(copyOfCurrentGameInstance, 5); // Do not set to 3 or under if full board
+    newSolverInstance.solveGame();
+    setSequence(newSolverInstance.getSolution());
+    setIsSolving(false);
   };
 
   return (
-    <div>
-      <button
-        style={{
-          color: "black",
-          margin: 4,
-          backgroundColor: changeBoardMode ? "green" : "white",
-        }}
-        onClick={() => {
-          setChangeBoardMode(!changeBoardMode);
-          setChangePegsMode(false);
-        }}
-      >
-        Change board layout
-      </button>
-      <button
-        style={{
-          color: "black",
-          margin: 4,
-          backgroundColor: changePegsMode ? "green" : "white",
-        }}
-        onClick={() => {
-          setChangePegsMode(!changePegsMode);
-          setChangeBoardMode(false);
-        }}
-      >
-        Add or remove pegs
-      </button>
-      <canvas
-        ref={canvasRef}
-        width={(maxSize + 1) * spacing + 2 * maxSize * pegRadius}
-        height={(maxSize + 1) * spacing + 2 * maxSize * pegRadius}
-        onClick={handleClick}
-      ></canvas>
-      <button> Test button </button>
-    </div>
+    <>
+      <div>
+        <button
+          disabled={isSolving}
+          style={{
+            color: "black",
+            margin: 4,
+            backgroundColor: changeBoardMode ? "green" : "white",
+          }}
+          onClick={() => {
+            setChangeBoardMode(!changeBoardMode);
+            setChangePegsMode(false);
+          }}
+        >
+          Change board layout
+        </button>
+        <button
+          disabled={isSolving}
+          style={{
+            color: "black",
+            margin: 4,
+            backgroundColor: changePegsMode ? "green" : "white",
+          }}
+          onClick={() => {
+            setChangePegsMode(!changePegsMode);
+            setChangeBoardMode(false);
+          }}
+        >
+          Add or remove pegs
+        </button>
+        <canvas
+          ref={canvasRef}
+          width={(maxSize + 1) * spacing + 2 * maxSize * pegRadius}
+          height={(maxSize + 1) * spacing + 2 * maxSize * pegRadius}
+          onClick={handleClick}
+        ></canvas>
+        <button
+          disabled={isSolving}
+          style={{
+            color: "black",
+            margin: 4,
+            backgroundColor: playSequenceMode ? "green" : "white",
+          }}
+          onClick={() => {
+            setPlaySequenceMode(true);
+          }}
+        >
+          Play sequence
+        </button>
+        <button
+          disabled={isSolving}
+          style={{
+            color: "black",
+            margin: 4,
+            backgroundColor: isSolving ? "green" : "white",
+          }}
+          onClick={() => {
+            setIsSolving(true);
+            findSolution();
+          }}
+        >
+          Find solution
+        </button>
+      </div>
+      <div>
+        {sequence?.map((move, index) => {
+          return (
+            <p key={index}>
+              {" "}
+              Move number {(index + 1).toString()}: {JSON.stringify(move)}{" "}
+            </p>
+          );
+        })}
+      </div>
+    </>
   );
 };
 

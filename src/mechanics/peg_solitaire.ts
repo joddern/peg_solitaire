@@ -101,6 +101,14 @@ export default class PegSolitaire {
     this.nonRestrictedCoordinates = this.findNonRestrictedCoords();
   }
 
+  getWidth(): number {
+    return this.boardWidth;
+  }
+
+  getHeight(): number {
+    return this.boardHeight;
+  }
+
   getBoard(): BoardElement[][] {
     return this.board;
   }
