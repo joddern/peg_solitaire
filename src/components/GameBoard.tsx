@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import PegSolitaire, {
   BoardCoord,
   BoardElement,
+  Move,
 } from "../mechanics/peg_solitaire";
 import { drawTheBoard } from "../utils/drawTheBoard";
 
@@ -15,6 +16,9 @@ const Game = () => {
   const [selectedPeg, setSelectedPeg] = useState<BoardCoord | null>(null);
   const [changeBoardMode, setChangeBoardMode] = useState<boolean>(false);
   const [changePegsMode, setChangePegsMode] = useState<boolean>(false);
+
+  const [sequence, setSequence] = useState<Move[] | null>(null);
+  const [playSequenceMode, setPlaySequenceMode] = useState<boolean>(false);
 
   const gameInstance = new PegSolitaire();
   const [board, setBoard] = useState(gameInstance.getBoard());
@@ -94,6 +98,33 @@ const Game = () => {
     setSelectedPeg(null);
   };
 
+  const playSequence = () => {
+    if (sequence === null || !playSequenceMode) {
+      console.log("Did not play sequence because of upper if sentence :)");
+      return;
+    }
+    sequence?.forEach((move) => {
+      setSelectedPeg(move.from);
+      setTimeout(() => {
+        if (
+          gameInstance.checkIfEligibleMove({
+            from: move.from,
+            to: move.to,
+          }) &&
+          gameInstance.checkLegalityOfEligibleMove({
+            from: move.from,
+            to: move.to,
+          })
+        ) {
+          gameInstance.doMove({
+            from: move.from,
+            to: move.to,
+          });
+        }
+      }, 1000);
+    });
+  };
+
   return (
     <div>
       <button
@@ -128,6 +159,7 @@ const Game = () => {
         height={(maxSize + 1) * spacing + 2 * maxSize * pegRadius}
         onClick={handleClick}
       ></canvas>
+      <button> Test button </button>
     </div>
   );
 };
