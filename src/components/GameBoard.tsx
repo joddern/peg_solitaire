@@ -1,67 +1,26 @@
 import React, { useEffect, useRef, useState } from "react";
-import { getRandomInt } from "../utils/gameboard";
+import PegSolitaire, {
+  BoardCoord,
+  BoardElement,
+} from "../mechanics/peg_solitaire";
+import { drawTheBoard } from "../utils/drawTheBoard";
 
-const maxSize = 7;
-const pegRadius = 20;
-const spacing = 10;
-
-type Coord = {
-  x: number;
-  y: number;
-};
+export const maxSize = 7;
+export const pegRadius = 20;
+export const spacing = 10;
 
 const Game = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [selectedPeg, setSelectedPeg] = useState<Coord | null>(null);
-  // Define the game board (1 for peg, 0 for empty, 2 for restricted field)
-  const [board, setBoard] = useState([
-    [2, 2, 1, 1, 1, 2, 2],
-    [2, 2, 1, 1, 1, 2, 2],
-    [1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 0, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1],
-    [2, 2, 1, 1, 1, 2, 2],
-    [2, 2, 1, 1, 1, 2, 2],
-  ]);
+
+  const [selectedPeg, setSelectedPeg] = useState<BoardCoord | null>(null);
   const [changeBoardMode, setChangeBoardMode] = useState<boolean>(false);
   const [changePegsMode, setChangePegsMode] = useState<boolean>(false);
 
+  const gameInstance = new PegSolitaire();
+  const [board, setBoard] = useState(gameInstance.getBoard());
+
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-
-    if (ctx) {
-      // Clear the canvas
-      ctx.clearRect(0, 0, canvas?.width ?? 0, canvas?.height ?? 0);
-
-      // Draw the pegs
-      for (let row = 0; row < board.length; row++) {
-        for (let col = 0; col < board[row].length; col++) {
-          if (board[row][col] === 0 || board[row][col] === 1) {
-            const x = col * (pegRadius * 2 + spacing) + pegRadius + spacing;
-            const y = row * (pegRadius * 2 + spacing) + pegRadius + spacing;
-            ctx.beginPath();
-            ctx.arc(x, y, pegRadius, 0, Math.PI * 2, false);
-            ctx.fillStyle = "blue";
-            ctx.fill();
-            ctx.closePath();
-            if (board[row][col] === 0) {
-              ctx.beginPath();
-              ctx.arc(x, y, pegRadius - 1, 0, Math.PI * 2, false);
-              ctx.fillStyle = "white";
-              ctx.fill();
-              ctx.closePath();
-            } else if (selectedPeg?.x === col && selectedPeg?.y === row) {
-              ctx.beginPath();
-              ctx.arc(x, y, 5, 0, Math.PI * 2, false);
-              ctx.fillStyle = "yellow";
-              ctx.fill();
-              ctx.closePath();
-            }
-          }
-        }
-      }
-    }
+    drawTheBoard(canvasRef, board, selectedPeg);
   }, [board, selectedPeg]);
 
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -89,36 +48,47 @@ const Game = () => {
     const y_centered =
       spacing + pegRadius + y_index * (2 * pegRadius + spacing);
 
-    // Check if within circle and that there is a peg in the circle
+    // Check if within circle
     if (Math.sqrt((y - y_centered) ** 2 + (x - x_centered) ** 2) <= pegRadius) {
       if (changeBoardMode) {
-        const board_copy = board.slice();
-        if (
-          board_copy[y_index][x_index] === 1 ||
-          board_copy[y_index][x_index] === 0
-        ) {
-          board_copy[y_index][x_index] = 2;
-        } else if (board_copy[y_index][x_index] === 2) {
-          board_copy[y_index][x_index] = 1;
-        }
+        gameInstance.toggleRestricted({ x: x_index, y: y_index });
+        const board_copy = gameInstance.getBoard().slice();
         setBoard(board_copy);
         return;
       } else if (changePegsMode) {
-        const board_copy = board.slice();
-        if (board_copy[y_index][x_index] === 1) {
-          board_copy[y_index][x_index] = 0;
-        } else if (board_copy[y_index][x_index] === 0) {
-          board_copy[y_index][x_index] = 1;
-        }
+        gameInstance.toggleBall({ x: x_index, y: y_index });
+        const board_copy = gameInstance.getBoard().slice();
         setBoard(board_copy);
         return;
       }
 
       // Normal play
-      if (board[y_index][x_index] === 1) {
+      if (board[y_index][x_index] === BoardElement.Ball) {
         setSelectedPeg({ x: x_index, y: y_index });
-        console.log("selected_peg set:", { x: x_index, y: y_index });
         return;
+      } else if (
+        selectedPeg !== null &&
+        board[y_index][x_index] === BoardElement.Empty
+      ) {
+        if (
+          gameInstance.checkIfEligibleMove({
+            from: selectedPeg,
+            to: { x: x_index, y: y_index },
+          }) &&
+          gameInstance.checkLegalityOfEligibleMove({
+            from: selectedPeg,
+            to: { x: x_index, y: y_index },
+          })
+        ) {
+          gameInstance.doMove({
+            from: selectedPeg,
+            to: { x: x_index, y: y_index },
+          });
+          const board_copy = gameInstance.getBoard().slice();
+          setBoard(board_copy);
+          setSelectedPeg(null);
+          return;
+        }
       }
     }
     setSelectedPeg(null);
@@ -127,7 +97,6 @@ const Game = () => {
   return (
     <div>
       <button
-        className="ml-12 mr-12 mt-12 mb-12"
         style={{
           color: "black",
           margin: 4,
@@ -141,7 +110,6 @@ const Game = () => {
         Change board layout
       </button>
       <button
-        className="ml-10 mr-12 mt-12 mb-12"
         style={{
           color: "black",
           margin: 4,
