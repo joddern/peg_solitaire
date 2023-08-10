@@ -281,7 +281,7 @@ export default class PegSolitaire {
   }
 
   findLegalMoves(): Move[] {
-    let listOfMoves: Move[] = [];
+    const listOfMoves: Move[] = [];
     this.eligibleMoves.forEach((move) => {
       if (this.checkLegalityOfEligibleMove(move)) listOfMoves.push(move);
     });
