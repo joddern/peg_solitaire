@@ -3,7 +3,7 @@ import PegSolitaire, { Move } from "./peg_solitaire";
 export default class Solver {
   private gameBoard: PegSolitaire;
   private solutionSet: Move[];
-  private unsolvablePositions: string[];
+  private unsolvablePositions: Set<string>;
   private ballsThreshold: number;
   private boardBallCount: number;
 
@@ -12,7 +12,7 @@ export default class Solver {
   constructor(gameBoard: PegSolitaire, ballsThreshold: number) {
     this.gameBoard = gameBoard;
     this.solutionSet = [];
-    this.unsolvablePositions = [];
+    this.unsolvablePositions = new Set<string>();
     this.ballsThreshold = ballsThreshold;
     this.boardBallCount = gameBoard.countBalls();
     this.movesCounter = 0;
@@ -43,16 +43,18 @@ export default class Solver {
 
     // Check if this position is unsolvable
     if (
-      this.unsolvablePositions.includes(JSON.stringify(this.gameBoard)) ||
-      possibleMoves.length === 0
-    )
+      possibleMoves.length === 0 ||
+      (this.boardBallCount > 12 &&
+        this.unsolvablePositions.has(JSON.stringify(this.gameBoard)))
+    ) {
       return false;
+    }
 
     for (let i = 0; i < possibleMoves.length; i++) {
       const currentMove: Move = possibleMoves[i];
       this.addMove(currentMove);
       this.boardBallCount--;
-      console.log(this.movesCounter++);
+      // console.log(this.movesCounter++);
 
       // Since there are more balls left and possible moves, reccur
       const gameSolved: boolean = this.solveGame();
@@ -66,7 +68,9 @@ export default class Solver {
     // If all moves are checked, none returned true games, then return further
     // TODO:
     // This should also add a board to unSolvableBoard.
-    this.unsolvablePositions.push(JSON.stringify(this.gameBoard.getBoard()));
+    if (this.boardBallCount > 12) {
+      this.unsolvablePositions.add(JSON.stringify(this.gameBoard.getBoard()));
+    }
     return false;
   }
 
@@ -76,6 +80,5 @@ export default class Solver {
 
   printSolutionSet(): void {
     console.log(this.solutionSet);
-    console.log(this.unsolvablePositions.length);
   }
 }
