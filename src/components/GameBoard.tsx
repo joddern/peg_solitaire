@@ -171,7 +171,9 @@ const Game = () => {
     const solved = newSolverInstance.solveGame();
     if (!solved) {
       setFailMessage(
-        "Either found no solution or timeout after searching for 10 seconds!"
+        "Either found no solution or timeout after searching for 10 seconds for criteria of: " +
+          solvingCriteria.toString() +
+          " pegs!"
       );
     } else {
       setFailMessage(
