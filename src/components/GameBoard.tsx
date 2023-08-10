@@ -28,6 +28,11 @@ const Game = () => {
 
   const [isSolving, setIsSolving] = useState<boolean>(false);
 
+  const [solvingCriteria, setSolvingCriteria] =
+    useState<number>(pegsLeftCriteria);
+
+  const [failMessage, setFailMessage] = useState<string | null>(null);
+
   useEffect(() => {
     drawTheBoard(canvasRef, board, selectedPeg);
   }, [board, selectedPeg]);
@@ -150,6 +155,9 @@ const Game = () => {
   }, [playSequenceMode]);
 
   const findSolution = () => {
+    setFailMessage(null);
+    const start = new Date().getTime();
+    console.log("Started solving game...");
     const board_copy = JSON.parse(JSON.stringify(board));
     const copyOfCurrentGameInstance = new PegSolitaire(
       gameInstance.getWidth(),
@@ -158,9 +166,23 @@ const Game = () => {
     );
     const newSolverInstance = new Solver(
       copyOfCurrentGameInstance,
-      pegsLeftCriteria
+      solvingCriteria
     );
-    newSolverInstance.solveGame();
+    const solved = newSolverInstance.solveGame();
+    if (!solved) {
+      setFailMessage(
+        "Either found no solution or timeout after searching for 10 seconds for criteria of: " +
+          solvingCriteria.toString() +
+          " pegs!"
+      );
+    } else {
+      setFailMessage(
+        "Success with criteria of: " + solvingCriteria.toString() + " pegs!"
+      );
+    }
+    console.log("Solved: ", solved);
+    console.log("Solving time: ", new Date().getTime() - start);
+
     setSequence(newSolverInstance.getSolution());
     setIsSolving(false);
   };
@@ -227,8 +249,43 @@ const Game = () => {
             findSolution();
           }}
         >
-          Find solution for pegs left criteria: {pegsLeftCriteria}
+          Find solution for pegs left criteria: {solvingCriteria}
         </button>
+      </div>
+      <div>
+        <p>
+          Choose searching criteria for pegs (too low criteria with too many
+          initial pegs might lag the page!)
+        </p>
+        <button
+          disabled={isSolving}
+          style={{
+            color: "black",
+            margin: 4,
+            backgroundColor: "white",
+          }}
+          onClick={() => {
+            setSolvingCriteria(solvingCriteria + 1);
+          }}
+        >
+          Up
+        </button>
+        <button
+          disabled={isSolving}
+          style={{
+            color: "black",
+            margin: 4,
+            backgroundColor: "white",
+          }}
+          onClick={() => {
+            if (solvingCriteria > 1) {
+              setSolvingCriteria(solvingCriteria - 1);
+            }
+          }}
+        >
+          Down
+        </button>
+        <p>{failMessage}</p>
       </div>
       <div>
         {sequence?.map((move, index) => {

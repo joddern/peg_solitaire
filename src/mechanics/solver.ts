@@ -1,22 +1,22 @@
-import PegSolitaire, { Move, BoardElement } from "./peg_solitaire";
-
-export type Board = {
-  board: BoardElement[][];
-};
+import PegSolitaire, { Move } from "./peg_solitaire";
 
 export default class Solver {
   private gameBoard: PegSolitaire;
   private solutionSet: Move[];
-  private unsolvablePositions: Board[];
+  private unsolvablePositions: Set<string>;
   private ballsThreshold: number;
+  private boardBallCount: number;
+  private creationTime: number;
 
   private movesCounter: number;
 
   constructor(gameBoard: PegSolitaire, ballsThreshold: number) {
     this.gameBoard = gameBoard;
     this.solutionSet = [];
-    this.unsolvablePositions = [];
+    this.unsolvablePositions = new Set<string>();
     this.ballsThreshold = ballsThreshold;
+    this.boardBallCount = gameBoard.countBalls();
+    this.creationTime = new Date().getTime();
     this.movesCounter = 0;
   }
 
@@ -26,12 +26,6 @@ export default class Solver {
   // Stop if there is only a few balls left.
   // When there there are no possible moves, check how many balls are left
   // No moves then remove the last done move
-  isUnsolvable(board: Board): boolean {
-    this.unsolvablePositions.forEach((unsolvableBoard) => {
-      if (areBoardsEqual(board, unsolvableBoard)) return true;
-    });
-    return false;
-  }
 
   addMove(move: Move) {
     this.gameBoard.doMove(move);
@@ -44,22 +38,26 @@ export default class Solver {
   }
 
   solveGame(): boolean {
-    const possibleMoves: Move[] = this.gameBoard.findLegalMoves();
-
     // Check how many balls left after a move
-    if (this.gameBoard.countBalls() <= this.ballsThreshold) return true;
+    if (this.boardBallCount <= this.ballsThreshold) return true;
+
+    const possibleMoves: Move[] = this.gameBoard.findLegalMoves();
 
     // Check if this position is unsolvable
     if (
-      this.isUnsolvable({ board: this.gameBoard.getBoard() }) ||
-      possibleMoves.length === 0
-    )
+      possibleMoves.length === 0 ||
+      new Date().getTime() - this.creationTime > 10000 ||
+      (this.boardBallCount > 12 &&
+        this.unsolvablePositions.has(JSON.stringify(this.gameBoard)))
+    ) {
       return false;
+    }
 
     for (let i = 0; i < possibleMoves.length; i++) {
       const currentMove: Move = possibleMoves[i];
       this.addMove(currentMove);
-      console.log(this.movesCounter++);
+      this.boardBallCount--;
+      // console.log(this.movesCounter++);
 
       // Since there are more balls left and possible moves, reccur
       const gameSolved: boolean = this.solveGame();
@@ -67,12 +65,15 @@ export default class Solver {
 
       // If the game has returned not true, then go back one step
       this.removeMove(currentMove);
+      this.boardBallCount++;
     }
 
     // If all moves are checked, none returned true games, then return further
     // TODO:
     // This should also add a board to unSolvableBoard.
-    this.unsolvablePositions.push({ board: this.gameBoard.getBoard() });
+    if (this.boardBallCount > 12) {
+      this.unsolvablePositions.add(JSON.stringify(this.gameBoard.getBoard()));
+    }
     return false;
   }
 
@@ -82,10 +83,5 @@ export default class Solver {
 
   printSolutionSet(): void {
     console.log(this.solutionSet);
-    console.log(this.unsolvablePositions.length);
   }
-}
-
-function areBoardsEqual(board1: Board, board2: Board): boolean {
-  return JSON.stringify(board1) === JSON.stringify(board2);
 }
