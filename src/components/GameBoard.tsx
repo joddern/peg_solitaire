@@ -219,6 +219,7 @@ const Game = () => {
           Add or remove pegs
         </button>
         <canvas
+          style={{ border: "1px solid #000000" }}
           ref={canvasRef}
           width={(maxSize + 1) * spacing + 2 * maxSize * pegRadius}
           height={(maxSize + 1) * spacing + 2 * maxSize * pegRadius}
