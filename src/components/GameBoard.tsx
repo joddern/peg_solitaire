@@ -11,7 +11,7 @@ export const maxSize = 7;
 export const pegRadius = 20;
 export const spacing = 10;
 
-const pegsLeftCriteria = 5; // Will lag the whole program if too low with too many pieces...
+const pegsLeftCriteria = 4; // Will lag the whole program if too low with too many pieces...
 
 const Game = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
