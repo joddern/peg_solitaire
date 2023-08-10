@@ -6,6 +6,7 @@ export default class Solver {
   private unsolvablePositions: Set<string>;
   private ballsThreshold: number;
   private boardBallCount: number;
+  private creationTime: number;
 
   private movesCounter: number;
 
@@ -15,6 +16,7 @@ export default class Solver {
     this.unsolvablePositions = new Set<string>();
     this.ballsThreshold = ballsThreshold;
     this.boardBallCount = gameBoard.countBalls();
+    this.creationTime = new Date().getTime();
     this.movesCounter = 0;
   }
 
@@ -44,6 +46,7 @@ export default class Solver {
     // Check if this position is unsolvable
     if (
       possibleMoves.length === 0 ||
+      new Date().getTime() - this.creationTime > 10000 ||
       (this.boardBallCount > 12 &&
         this.unsolvablePositions.has(JSON.stringify(this.gameBoard)))
     ) {
