@@ -150,6 +150,8 @@ const Game = () => {
   }, [playSequenceMode]);
 
   const findSolution = () => {
+    const start = new Date().getTime();
+
     const board_copy = JSON.parse(JSON.stringify(board));
     const copyOfCurrentGameInstance = new PegSolitaire(
       gameInstance.getWidth(),
@@ -161,6 +163,9 @@ const Game = () => {
       pegsLeftCriteria
     );
     newSolverInstance.solveGame();
+
+    console.log("Solving time: ", new Date().getTime() - start);
+
     setSequence(newSolverInstance.getSolution());
     setIsSolving(false);
   };
