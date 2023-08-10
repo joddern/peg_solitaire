@@ -57,132 +57,233 @@ export default class Solver {
   }
 
   updatePossibleMovesBasedOnExecutedMove(move: Move) {
+    const board = this.gameBoard.getBoard();
     const fromCoord = move.from;
     const betweenCoord = {
       x: (move.to.x + move.from.x) / 2,
       y: (move.to.y + move.from.y) / 2,
     };
     const toCoord = move.to;
-    // Remove moves that are no longer possible
+
     // 1
-    let index = this.possibleMoves.indexOf({
-      from: { x: fromCoord.x, y: fromCoord.y - 1 },
-      to: { x: fromCoord.x, y: fromCoord.y + 1 },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
+    if (board[fromCoord.y - 1][fromCoord.x] === BoardElement.Ball) {
+      if (board[fromCoord.y - 2][fromCoord.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: { x: fromCoord.x, y: fromCoord.y - 2 },
+          to: fromCoord,
+        });
+      } else if (board[fromCoord.y - 2][fromCoord.x] === BoardElement.Empty) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: fromCoord,
+            to: { x: fromCoord.x, y: fromCoord.y - 2 },
+          }),
+          1
+        );
+      }
+
+      // 2
+      if (board[fromCoord.y + 1][fromCoord.x] === BoardElement.Empty) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: { x: fromCoord.x, y: fromCoord.y - 1 },
+            to: { x: fromCoord.x, y: fromCoord.y + 1 },
+          }),
+          1
+        );
+      }
     }
 
     // 2
-    index = this.possibleMoves.indexOf({
-      from: { x: fromCoord.x, y: fromCoord.y + 1 },
-      to: { x: fromCoord.x, y: fromCoord.y - 1 },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
+    if (board[fromCoord.y + 1][fromCoord.x] === BoardElement.Ball) {
+      if (board[fromCoord.y + 2][fromCoord.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: { x: fromCoord.x, y: fromCoord.y + 2 },
+          to: fromCoord,
+        });
+      } else if (board[fromCoord.y - 2][fromCoord.x] === BoardElement.Empty) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: fromCoord,
+            to: { x: fromCoord.x, y: fromCoord.y + 2 },
+          }),
+          1
+        );
+      }
+
+      // 1
+      if (board[fromCoord.y - 1][fromCoord.x] === BoardElement.Empty) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: { x: fromCoord.x, y: fromCoord.y + 1 },
+            to: { x: fromCoord.x, y: fromCoord.y - 1 },
+          }),
+          1
+        );
+      }
     }
 
     // 3
-    index = this.possibleMoves.indexOf({
-      from: { x: fromCoord.x + 1, y: fromCoord.y },
-      to: { x: fromCoord.x - 1, y: fromCoord.y },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
+    if (board[fromCoord.y][fromCoord.x - 1] === BoardElement.Ball) {
+      if (board[fromCoord.y][fromCoord.x - 2] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: { x: fromCoord.x - 2, y: fromCoord.y },
+          to: fromCoord,
+        });
+      } else if (board[fromCoord.y][fromCoord.x - 2] === BoardElement.Empty) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: fromCoord,
+            to: { x: fromCoord.x - 2, y: fromCoord.y },
+          }),
+          1
+        );
+      }
+    } else if (board[fromCoord.y][fromCoord.x - 1] === BoardElement.Empty) {
+      this.possibleMoves.splice(
+        this.possibleMoves.indexOf({
+          from: { x: fromCoord.x + 1, y: fromCoord.y },
+          to: { x: fromCoord.x - 1, y: fromCoord.y },
+        }),
+        1
+      );
     }
 
     // 4
-    index = this.possibleMoves.indexOf({
-      from: { x: fromCoord.x, y: fromCoord.y },
-      to: { x: fromCoord.x - 2, y: fromCoord.y },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
+    if (board[betweenCoord.y - 1][betweenCoord.x] === BoardElement.Ball) {
+      if (board[betweenCoord.y - 2][betweenCoord.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: { x: betweenCoord.x, y: betweenCoord.y - 2 },
+          to: betweenCoord,
+        });
+      } else if (
+        board[betweenCoord.y - 2][betweenCoord.x] === BoardElement.Empty
+      ) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: betweenCoord,
+            to: { x: betweenCoord.x, y: betweenCoord.y - 2 },
+          }),
+          1
+        );
+      }
+
+      // 5
+      if (board[betweenCoord.y + 1][betweenCoord.x] === BoardElement.Empty) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: { x: betweenCoord.x, y: betweenCoord.y - 1 },
+            to: { x: betweenCoord.x, y: betweenCoord.y + 1 },
+          }),
+          1
+        );
+      }
     }
 
     // 5
-    index = this.possibleMoves.indexOf({
-      from: { x: fromCoord.x, y: fromCoord.y },
-      to: { x: fromCoord.x, y: fromCoord.y - 2 },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
+    if (board[betweenCoord.y + 1][betweenCoord.x] === BoardElement.Ball) {
+      if (board[betweenCoord.y + 2][betweenCoord.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: { x: betweenCoord.x, y: betweenCoord.y + 2 },
+          to: betweenCoord,
+        });
+      } else if (
+        board[betweenCoord.y - 2][betweenCoord.x] === BoardElement.Empty
+      ) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: betweenCoord,
+            to: { x: betweenCoord.x, y: betweenCoord.y + 2 },
+          }),
+          1
+        );
+      }
+
+      // 4
+      if (board[betweenCoord.y - 1][betweenCoord.x] === BoardElement.Empty) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: { x: betweenCoord.x, y: betweenCoord.y + 1 },
+            to: { x: betweenCoord.x, y: betweenCoord.y - 1 },
+          }),
+          1
+        );
+      }
     }
 
     // 6
-    index = this.possibleMoves.indexOf({
-      from: { x: fromCoord.x, y: fromCoord.y },
-      to: { x: fromCoord.x, y: fromCoord.y + 2 },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
+    if (board[toCoord.y][toCoord.x + 1] === BoardElement.Ball) {
+      this.possibleMoves.push({
+        from: { x: toCoord.x + 1, y: toCoord.y },
+        to: betweenCoord,
+      });
+      if (board[toCoord.y][toCoord.x + 2] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: toCoord,
+          to: { x: toCoord.x + 2, y: toCoord.y },
+        });
+      } else if (board[toCoord.y][toCoord.x + 2] === BoardElement.Ball) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: { x: toCoord.x + 2, y: toCoord.y },
+            to: toCoord,
+          }),
+          1
+        );
+      }
     }
 
     // 7
-    index = this.possibleMoves.indexOf({
-      from: { x: betweenCoord.x, y: betweenCoord.y + 1 },
-      to: { x: betweenCoord.x, y: betweenCoord.y - 1 },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
+    if (board[toCoord.y - 1][toCoord.x] === BoardElement.Ball) {
+      if (board[toCoord.y - 2][toCoord.x] === BoardElement.Ball) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: { x: toCoord.x, y: toCoord.y - 2 },
+            to: toCoord,
+          }),
+          1
+        );
+      } else if (board[toCoord.y - 2][toCoord.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: toCoord,
+          to: { x: toCoord.x, y: toCoord.y - 2 },
+        });
+      }
+
+      // 8
+      if (board[toCoord.y + 1][toCoord.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: { x: toCoord.x, y: toCoord.y - 1 },
+          to: { x: toCoord.x, y: toCoord.y + 1 },
+        });
+      }
     }
 
     // 8
-    index = this.possibleMoves.indexOf({
-      from: { x: betweenCoord.x, y: betweenCoord.y - 1 },
-      to: { x: betweenCoord.x, y: betweenCoord.y + 1 },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
-    }
+    if (board[toCoord.y + 1][toCoord.x] === BoardElement.Ball) {
+      if (board[toCoord.y + 2][toCoord.x] === BoardElement.Ball) {
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: { x: toCoord.x, y: toCoord.y + 2 },
+            to: toCoord,
+          }),
+          1
+        );
+      } else if (board[toCoord.y + 2][toCoord.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: toCoord,
+          to: { x: toCoord.x, y: toCoord.y + 2 },
+        });
+      }
 
-    // 9
-    index = this.possibleMoves.indexOf({
-      from: { x: betweenCoord.x, y: betweenCoord.y },
-      to: { x: betweenCoord.x, y: betweenCoord.y - 2 },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
+      // 7
+      if (board[toCoord.y - 1][toCoord.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: { x: toCoord.x, y: toCoord.y + 1 },
+          to: { x: toCoord.x, y: toCoord.y - 1 },
+        });
+      }
     }
-
-    // 10
-    index = this.possibleMoves.indexOf({
-      from: { x: betweenCoord.x, y: betweenCoord.y },
-      to: { x: betweenCoord.x, y: betweenCoord.y + 2 },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
-    }
-
-    // 11
-    index = this.possibleMoves.indexOf({
-      from: { x: toCoord.x, y: toCoord.y - 2 },
-      to: { x: toCoord.x, y: toCoord.y },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
-    }
-
-    // 12
-    index = this.possibleMoves.indexOf({
-      from: { x: toCoord.x, y: toCoord.y + 2 },
-      to: { x: toCoord.x, y: toCoord.y },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
-    }
-
-    // 13
-    index = this.possibleMoves.indexOf({
-      from: { x: toCoord.x + 2, y: toCoord.y },
-      to: { x: toCoord.x, y: toCoord.y },
-    });
-    if (index > -1) {
-      this.possibleMoves.splice(index, 1);
-    }
-
-    // Add new possible moves
-    // 1
   }
 
   solveGame(): boolean {
