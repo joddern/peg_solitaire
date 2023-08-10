@@ -11,7 +11,7 @@ export const maxSize = 7;
 export const pegRadius = 20;
 export const spacing = 10;
 
-const pegsLeftCriteria = 4; // Will lag the whole program if too low with too many pieces...
+const pegsLeftCriteria = 1; // Will lag the whole program if too low with too many pieces...
 
 const Game = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -151,7 +151,7 @@ const Game = () => {
 
   const findSolution = () => {
     const start = new Date().getTime();
-
+    console.log("Started solving game...");
     const board_copy = JSON.parse(JSON.stringify(board));
     const copyOfCurrentGameInstance = new PegSolitaire(
       gameInstance.getWidth(),
@@ -162,8 +162,8 @@ const Game = () => {
       copyOfCurrentGameInstance,
       pegsLeftCriteria
     );
-    newSolverInstance.solveGame();
-
+    const solved = newSolverInstance.solveGame();
+    console.log("Solved: ", solved);
     console.log("Solving time: ", new Date().getTime() - start);
 
     setSequence(newSolverInstance.getSolution());
