@@ -111,6 +111,114 @@ export default class Solver {
     }
   }
 
+  findSurroundingCoordsOfMove(move: Move) {
+    if (move.to.x - move.from.x > 0) {
+      // Right move
+      const fromCoord = move.from;
+      const betweenCoord = {
+        x: move.from.x + 1,
+        y: move.from.y,
+      };
+      const toCoord = move.to;
+
+      const a1 = { x: fromCoord.x, y: fromCoord.y - 1 };
+      const b1 = { x: fromCoord.x, y: fromCoord.y + 1 };
+      const c1 = { x: fromCoord.x - 1, y: fromCoord.y };
+      const d1 = { x: betweenCoord.x, y: betweenCoord.y - 1 };
+      const e1 = { x: betweenCoord.x, y: betweenCoord.y + 1 };
+      const f1 = { x: toCoord.x + 1, y: toCoord.y };
+      const g1 = { x: toCoord.x, y: toCoord.y - 1 };
+      const h1 = { x: toCoord.x, y: toCoord.y + 1 };
+
+      const a2 = { x: fromCoord.x, y: fromCoord.y - 2 };
+      const b2 = { x: fromCoord.x, y: fromCoord.y + 2 };
+      const c2 = { x: fromCoord.x - 2, y: fromCoord.y };
+      const d2 = { x: betweenCoord.x, y: betweenCoord.y - 2 };
+      const e2 = { x: betweenCoord.x, y: betweenCoord.y + 2 };
+      const f2 = { x: toCoord.x + 2, y: toCoord.y };
+      const g2 = { x: toCoord.x, y: toCoord.y - 2 };
+      const h2 = { x: toCoord.x, y: toCoord.y + 2 };
+    } else if (move.to.x - move.from.x < 0) {
+      // Left move
+      const fromCoord = move.from;
+      const betweenCoord = {
+        x: move.from.x - 1,
+        y: move.from.y,
+      };
+      const toCoord = move.to;
+
+      const a1 = { x: fromCoord.x, y: fromCoord.y + 1 };
+      const b1 = { x: fromCoord.x, y: fromCoord.y - 1 };
+      const c1 = { x: fromCoord.x + 1, y: fromCoord.y };
+      const d1 = { x: betweenCoord.x, y: betweenCoord.y + 1 };
+      const e1 = { x: betweenCoord.x, y: betweenCoord.y - 1 };
+      const f1 = { x: toCoord.x - 1, y: toCoord.y };
+      const g1 = { x: toCoord.x, y: toCoord.y + 1 };
+      const h1 = { x: toCoord.x, y: toCoord.y - 1 };
+
+      const a2 = { x: fromCoord.x, y: fromCoord.y + 2 };
+      const b2 = { x: fromCoord.x, y: fromCoord.y - 2 };
+      const c2 = { x: fromCoord.x + 2, y: fromCoord.y };
+      const d2 = { x: betweenCoord.x, y: betweenCoord.y + 2 };
+      const e2 = { x: betweenCoord.x, y: betweenCoord.y - 2 };
+      const f2 = { x: toCoord.x - 2, y: toCoord.y };
+      const g2 = { x: toCoord.x, y: toCoord.y + 2 };
+      const h2 = { x: toCoord.x, y: toCoord.y - 2 };
+    } else if (move.to.y - move.from.y > 0) {
+      // Down move
+      const fromCoord = move.from;
+      const betweenCoord = {
+        x: move.from.x,
+        y: move.from.y + 1,
+      };
+      const toCoord = move.to;
+
+      const a1 = { x: fromCoord.x + 1, y: fromCoord.y };
+      const b1 = { x: fromCoord.x - 1, y: fromCoord.y };
+      const c1 = { x: fromCoord.x, y: fromCoord.y - 1 };
+      const d1 = { x: betweenCoord.x + 1, y: betweenCoord.y };
+      const e1 = { x: betweenCoord.x - 1, y: betweenCoord.y };
+      const f1 = { x: toCoord.x, y: toCoord.y + 1 };
+      const g1 = { x: toCoord.x + 1, y: toCoord.y };
+      const h1 = { x: toCoord.x - 1, y: toCoord.y };
+
+      const a2 = { x: fromCoord.x + 2, y: fromCoord.y };
+      const b2 = { x: fromCoord.x - 2, y: fromCoord.y };
+      const c2 = { x: fromCoord.x, y: fromCoord.y - 2 };
+      const d2 = { x: betweenCoord.x + 2, y: betweenCoord.y };
+      const e2 = { x: betweenCoord.x - 2, y: betweenCoord.y };
+      const f2 = { x: toCoord.x, y: toCoord.y + 2 };
+      const g2 = { x: toCoord.x + 2, y: toCoord.y };
+      const h2 = { x: toCoord.x - 2, y: toCoord.y };
+    } else if (move.to.y - move.from.y < 0) {
+      // Up move
+      const fromCoord = move.from;
+      const betweenCoord = {
+        x: move.from.x,
+        y: move.from.y - 1,
+      };
+      const toCoord = move.to;
+
+      const a1 = { x: fromCoord.x - 1, y: fromCoord.y };
+      const b1 = { x: fromCoord.x + 1, y: fromCoord.y };
+      const c1 = { x: fromCoord.x, y: fromCoord.y + 1 };
+      const d1 = { x: betweenCoord.x - 1, y: betweenCoord.y };
+      const e1 = { x: betweenCoord.x + 1, y: betweenCoord.y };
+      const f1 = { x: toCoord.x, y: toCoord.y - 1 };
+      const g1 = { x: toCoord.x - 1, y: toCoord.y };
+      const h1 = { x: toCoord.x + 1, y: toCoord.y };
+
+      const a2 = { x: fromCoord.x - 2, y: fromCoord.y };
+      const b2 = { x: fromCoord.x + 2, y: fromCoord.y };
+      const c2 = { x: fromCoord.x, y: fromCoord.y + 2 };
+      const d2 = { x: betweenCoord.x - 2, y: betweenCoord.y };
+      const e2 = { x: betweenCoord.x + 2, y: betweenCoord.y };
+      const f2 = { x: toCoord.x, y: toCoord.y - 2 };
+      const g2 = { x: toCoord.x - 2, y: toCoord.y };
+      const h2 = { x: toCoord.x + 2, y: toCoord.y };
+    }
+  }
+
   updatePossibleMovesBasedOnExecutedMoveDown(move: Move) {
     const board = this.gameBoard.getBoard();
     const fromCoord = move.from;
