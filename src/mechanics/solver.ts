@@ -32,7 +32,72 @@ export default class Solver {
   // When there there are no possible moves, check how many balls are left
   // No moves then remove the last done move
 
-  // *** NEW BIG FUNCTION START *** //
+  addMove(move: Move) {
+    this.gameBoard.doMove(move);
+    this.solutionSet.push(move);
+  }
+
+  removeMove(move: Move) {
+    this.gameBoard.undoMove(move);
+    this.solutionSet.pop(); // Only removes last, good enough?
+  }
+
+  solveGame(): boolean {
+    // Check how many balls left after a move
+    if (this.boardBallCount <= this.ballsThreshold) return true;
+
+    const possibleMoves: Move[] = this.gameBoard.findLegalMoves();
+
+    // Check if this position is unsolvable
+    if (
+      possibleMoves.length === 0 ||
+      new Date().getTime() - this.creationTime > 10000 ||
+      (this.boardBallCount > 12 &&
+        this.unsolvablePositions.has(JSON.stringify(this.gameBoard)))
+    ) {
+      return false;
+    }
+
+    for (let i = 0; i < possibleMoves.length; i++) {
+      const currentMove: Move = possibleMoves[i];
+      this.addMove(currentMove);
+      this.boardBallCount--;
+      // console.log(this.movesCounter++);
+
+      // Since there are more balls left and possible moves, reccur
+      const gameSolved: boolean = this.solveGame();
+      if (gameSolved) return true;
+
+      // If the game has returned not true, then go back one step
+      this.removeMove(currentMove);
+      this.boardBallCount++;
+    }
+
+    // If all moves are checked, none returned true games, then return further
+    // TODO:
+    // This should also add a board to unSolvableBoard.
+    if (this.boardBallCount > 12) {
+      this.unsolvablePositions.add(JSON.stringify(this.gameBoard.getBoard()));
+    }
+    return false;
+  }
+
+  getSolution(): Move[] {
+    return this.solutionSet;
+  }
+
+  printSolutionSet(): void {
+    console.log(this.solutionSet);
+  }
+
+  // NEW FUNCTIONS
+
+  findDirectionAndUpdateOnExecuted(move: Move) {
+    if (move.to.x - move.from.x > 0) {
+      this.updatePossibleMovesBasedOnExecutedMoveRight(move);
+    } else if (move.to.x - move.from.x < 0) {
+    }
+  }
 
   updatePossibleMovesBasedOnExecutedMoveDown(move: Move) {
     const board = this.gameBoard.getBoard();
@@ -1038,66 +1103,6 @@ export default class Solver {
     }
   }
 
-  // *** NEW BIG FUNCTION END *** //
-
-  addMove(move: Move) {
-    this.gameBoard.doMove(move);
-    this.solutionSet.push(move);
-  }
-
-  removeMove(move: Move) {
-    this.gameBoard.undoMove(move);
-    this.solutionSet.pop(); // Only removes last, good enough?
-  }
-
-  solveGame(): boolean {
-    // Check how many balls left after a move
-    if (this.boardBallCount <= this.ballsThreshold) return true;
-
-    const possibleMoves: Move[] = this.gameBoard.findLegalMoves();
-
-    // Check if this position is unsolvable
-    if (
-      possibleMoves.length === 0 ||
-      new Date().getTime() - this.creationTime > 10000 ||
-      (this.boardBallCount > 12 &&
-        this.unsolvablePositions.has(JSON.stringify(this.gameBoard)))
-    ) {
-      return false;
-    }
-
-    for (let i = 0; i < possibleMoves.length; i++) {
-      const currentMove: Move = possibleMoves[i];
-      this.addMove(currentMove);
-      this.boardBallCount--;
-      // console.log(this.movesCounter++);
-
-      // Since there are more balls left and possible moves, reccur
-      const gameSolved: boolean = this.solveGame();
-      if (gameSolved) return true;
-
-      // If the game has returned not true, then go back one step
-      this.removeMove(currentMove);
-      this.boardBallCount++;
-    }
-
-    // If all moves are checked, none returned true games, then return further
-    // TODO:
-    // This should also add a board to unSolvableBoard.
-    if (this.boardBallCount > 12) {
-      this.unsolvablePositions.add(JSON.stringify(this.gameBoard.getBoard()));
-    }
-    return false;
-  }
-
-  getSolution(): Move[] {
-    return this.solutionSet;
-  }
-
-  printSolutionSet(): void {
-    console.log(this.solutionSet);
-  }
-
   updatePossibleMovesBasedOnRemovedMoveDown(move: Move) {
     const board = this.gameBoard.getBoard();
     const fromCoord = move.from;
@@ -1121,29 +1126,26 @@ export default class Solver {
       const a2 = { x: fromCoord.x + 2, y: fromCoord.y };
 
       if (board[a2.y][a2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: a2,
-          to: fromCoord,
-        });
-      } else if (board[a2.y][a2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: a2,
+            from: a2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[a2.y][a2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: a2,
+        });
       }
 
       // 2
       if (board[b1.y][b1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: a1,
-            to: b1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: a1,
+          to: b1,
+        });
       }
     }
 
@@ -1152,29 +1154,26 @@ export default class Solver {
       const b2 = { x: fromCoord.x - 2, y: fromCoord.y };
 
       if (board[b2.y][b2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: b2,
-          to: fromCoord,
-        });
-      } else if (board[b2.y][b2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: b2,
+            from: b2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[b2.y][b2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: b2,
+        });
       }
 
       // 1
       if (board[a1.y][a1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: b1,
-            to: a1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: b1,
+          to: a1,
+        });
       }
     }
 
@@ -1183,27 +1182,24 @@ export default class Solver {
       const c2 = { x: fromCoord.x, y: fromCoord.y - 2 };
 
       if (board[c2.y][c2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: c2,
-          to: fromCoord,
-        });
-      } else if (board[c2.y][c2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: c2,
+            from: c2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[c2.y][c2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: c2,
+        });
       }
     } else if (board[c1.y][c1.x] === BoardElement.Empty) {
-      this.possibleMoves.splice(
-        this.possibleMoves.indexOf({
-          from: betweenCoord,
-          to: c1,
-        }),
-        1
-      );
+      this.possibleMoves.push({
+        from: betweenCoord,
+        to: c1,
+      });
     }
 
     // 4
@@ -1211,29 +1207,26 @@ export default class Solver {
       const d2 = { x: betweenCoord.x + 2, y: betweenCoord.y };
 
       if (board[d2.y][d2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: d2,
-          to: betweenCoord,
-        });
-      } else if (board[d2.y][d2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: betweenCoord,
-            to: d2,
+            from: d2,
+            to: betweenCoord,
           }),
           1
         );
+      } else if (board[d2.y][d2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: betweenCoord,
+          to: d2,
+        });
       }
 
       // 5
       if (board[e1.y][e1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: d1,
-            to: e1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: d1,
+          to: e1,
+        });
       }
     }
 
@@ -1242,53 +1235,53 @@ export default class Solver {
       const e2 = { x: betweenCoord.x - 2, y: betweenCoord.y };
 
       if (board[e2.y][e2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: e2,
-          to: betweenCoord,
-        });
-      } else if (board[e2.y][e2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: betweenCoord,
-            to: e2,
+            from: e2,
+            to: betweenCoord,
           }),
           1
         );
+      } else if (board[e2.y][e2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: betweenCoord,
+          to: e2,
+        });
       }
 
       // 4
       if (board[d1.y][d1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: e1,
-            to: d1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: e1,
+          to: d1,
+        });
       }
     }
 
     // 6
     if (board[f1.y][f1.x] === BoardElement.Ball) {
-      this.possibleMoves.push({
-        from: f1,
-        to: betweenCoord,
-      });
+      this.possibleMoves.splice(
+        this.possibleMoves.indexOf({
+          from: f1,
+          to: betweenCoord,
+        }),
+        1
+      );
       const f2 = { x: toCoord.x, y: toCoord.y + 2 };
 
       if (board[f2.y][f2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: f2,
-        });
-      } else if (board[f2.y][f2.x] === BoardElement.Ball) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: f2,
-            to: toCoord,
+            from: toCoord,
+            to: f2,
           }),
           1
         );
+      } else if (board[f2.y][f2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: f2,
+          to: toCoord,
+        });
       }
     }
 
@@ -1297,26 +1290,29 @@ export default class Solver {
       const g2 = { x: toCoord.x + 2, y: toCoord.y };
 
       if (board[g2.y][g2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: g2,
+          to: toCoord,
+        });
+      } else if (board[g2.y][g2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: g2,
-            to: toCoord,
+            from: toCoord,
+            to: g2,
           }),
           1
         );
-      } else if (board[g2.y][g2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: g2,
-        });
       }
 
       // 8
       if (board[h1.y][h1.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: g1,
-          to: h1,
-        });
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: g1,
+            to: h1,
+          }),
+          1
+        );
       }
     }
 
@@ -1325,26 +1321,29 @@ export default class Solver {
       const h2 = { x: toCoord.x - 2, y: toCoord.y };
 
       if (board[h2.y][h2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: h2,
+          to: toCoord,
+        });
+      } else if (board[h2.y][h2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: h2,
-            to: toCoord,
+            from: toCoord,
+            to: h2,
           }),
           1
         );
-      } else if (board[h2.y][h2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: h2,
-        });
       }
 
       // 7
       if (board[g1.y][g1.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: h1,
-          to: g1,
-        });
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: h1,
+            to: g1,
+          }),
+          1
+        );
       }
     }
   }
@@ -1372,29 +1371,26 @@ export default class Solver {
       const a2 = { x: fromCoord.x - 2, y: fromCoord.y };
 
       if (board[a2.y][a2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: a2,
-          to: fromCoord,
-        });
-      } else if (board[a2.y][a2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: a2,
+            from: a2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[a2.y][a2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: a2,
+        });
       }
 
       // 2
       if (board[b1.y][b1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: a1,
-            to: b1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: a1,
+          to: b1,
+        });
       }
     }
 
@@ -1403,29 +1399,26 @@ export default class Solver {
       const b2 = { x: fromCoord.x + 2, y: fromCoord.y };
 
       if (board[b2.y][b2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: b2,
-          to: fromCoord,
-        });
-      } else if (board[b2.y][b2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: b2,
+            from: b2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[b2.y][b2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: b2,
+        });
       }
 
       // 1
       if (board[a1.y][a1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: b1,
-            to: a1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: b1,
+          to: a1,
+        });
       }
     }
 
@@ -1434,27 +1427,24 @@ export default class Solver {
       const c2 = { x: fromCoord.x, y: fromCoord.y + 2 };
 
       if (board[c2.y][c2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: c2,
-          to: fromCoord,
-        });
-      } else if (board[c2.y][c2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: c2,
+            from: c2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[c2.y][c2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: c2,
+        });
       }
     } else if (board[c1.y][c1.x] === BoardElement.Empty) {
-      this.possibleMoves.splice(
-        this.possibleMoves.indexOf({
-          from: betweenCoord,
-          to: c1,
-        }),
-        1
-      );
+      this.possibleMoves.push({
+        from: betweenCoord,
+        to: c1,
+      });
     }
 
     // 4
@@ -1462,29 +1452,26 @@ export default class Solver {
       const d2 = { x: betweenCoord.x - 2, y: betweenCoord.y };
 
       if (board[d2.y][d2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: d2,
-          to: betweenCoord,
-        });
-      } else if (board[d2.y][d2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: betweenCoord,
-            to: d2,
+            from: d2,
+            to: betweenCoord,
           }),
           1
         );
+      } else if (board[d2.y][d2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: betweenCoord,
+          to: d2,
+        });
       }
 
       // 5
       if (board[e1.y][e1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: d1,
-            to: e1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: d1,
+          to: e1,
+        });
       }
     }
 
@@ -1493,53 +1480,53 @@ export default class Solver {
       const e2 = { x: betweenCoord.x + 2, y: betweenCoord.y };
 
       if (board[e2.y][e2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: e2,
-          to: betweenCoord,
-        });
-      } else if (board[e2.y][e2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: betweenCoord,
-            to: e2,
+            from: e2,
+            to: betweenCoord,
           }),
           1
         );
+      } else if (board[e2.y][e2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: betweenCoord,
+          to: e2,
+        });
       }
 
       // 4
       if (board[d1.y][d1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: e1,
-            to: d1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: e1,
+          to: d1,
+        });
       }
     }
 
     // 6
     if (board[f1.y][f1.x] === BoardElement.Ball) {
-      this.possibleMoves.push({
-        from: f1,
-        to: betweenCoord,
-      });
+      this.possibleMoves.splice(
+        this.possibleMoves.indexOf({
+          from: f1,
+          to: betweenCoord,
+        }),
+        1
+      );
       const f2 = { x: toCoord.x, y: toCoord.y - 2 };
 
       if (board[f2.y][f2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: f2,
-        });
-      } else if (board[f2.y][f2.x] === BoardElement.Ball) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: f2,
-            to: toCoord,
+            from: toCoord,
+            to: f2,
           }),
           1
         );
+      } else if (board[f2.y][f2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: f2,
+          to: toCoord,
+        });
       }
     }
 
@@ -1548,26 +1535,29 @@ export default class Solver {
       const g2 = { x: toCoord.x - 2, y: toCoord.y };
 
       if (board[g2.y][g2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: g2,
+          to: toCoord,
+        });
+      } else if (board[g2.y][g2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: g2,
-            to: toCoord,
+            from: toCoord,
+            to: g2,
           }),
           1
         );
-      } else if (board[g2.y][g2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: g2,
-        });
       }
 
       // 8
       if (board[h1.y][h1.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: g1,
-          to: h1,
-        });
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: g1,
+            to: h1,
+          }),
+          1
+        );
       }
     }
 
@@ -1576,26 +1566,29 @@ export default class Solver {
       const h2 = { x: toCoord.x + 2, y: toCoord.y };
 
       if (board[h2.y][h2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: h2,
+          to: toCoord,
+        });
+      } else if (board[h2.y][h2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: h2,
-            to: toCoord,
+            from: toCoord,
+            to: h2,
           }),
           1
         );
-      } else if (board[h2.y][h2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: h2,
-        });
       }
 
       // 7
       if (board[g1.y][g1.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: h1,
-          to: g1,
-        });
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: h1,
+            to: g1,
+          }),
+          1
+        );
       }
     }
   }
@@ -1623,29 +1616,26 @@ export default class Solver {
       const a2 = { x: fromCoord.x, y: fromCoord.y + 2 };
 
       if (board[a2.y][a2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: a2,
-          to: fromCoord,
-        });
-      } else if (board[a2.y][a2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: a2,
+            from: a2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[a2.y][a2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: a2,
+        });
       }
 
       // 2
       if (board[b1.y][b1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: a1,
-            to: b1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: a1,
+          to: b1,
+        });
       }
     }
 
@@ -1654,29 +1644,26 @@ export default class Solver {
       const b2 = { x: fromCoord.x, y: fromCoord.y - 2 };
 
       if (board[b2.y][b2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: b2,
-          to: fromCoord,
-        });
-      } else if (board[b2.y][b2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: b2,
+            from: b2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[b2.y][b2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: b2,
+        });
       }
 
       // 1
       if (board[a1.y][a1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: b1,
-            to: a1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: b1,
+          to: a1,
+        });
       }
     }
 
@@ -1685,27 +1672,24 @@ export default class Solver {
       const c2 = { x: fromCoord.x + 2, y: fromCoord.y };
 
       if (board[c2.y][c2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: c2,
-          to: fromCoord,
-        });
-      } else if (board[c2.y][c2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: c2,
+            from: c2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[c2.y][c2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: c2,
+        });
       }
     } else if (board[c1.y][c1.x] === BoardElement.Empty) {
-      this.possibleMoves.splice(
-        this.possibleMoves.indexOf({
-          from: betweenCoord,
-          to: c1,
-        }),
-        1
-      );
+      this.possibleMoves.push({
+        from: betweenCoord,
+        to: c1,
+      });
     }
 
     // 4
@@ -1713,29 +1697,26 @@ export default class Solver {
       const d2 = { x: betweenCoord.x, y: betweenCoord.y + 2 };
 
       if (board[d2.y][d2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: d2,
-          to: betweenCoord,
-        });
-      } else if (board[d2.y][d2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: betweenCoord,
-            to: d2,
+            from: d2,
+            to: betweenCoord,
           }),
           1
         );
+      } else if (board[d2.y][d2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: betweenCoord,
+          to: d2,
+        });
       }
 
       // 5
       if (board[e1.y][e1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: d1,
-            to: e1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: d1,
+          to: e1,
+        });
       }
     }
 
@@ -1744,53 +1725,53 @@ export default class Solver {
       const e2 = { x: betweenCoord.x, y: betweenCoord.y - 2 };
 
       if (board[e2.y][e2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: e2,
-          to: betweenCoord,
-        });
-      } else if (board[e2.y][e2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: betweenCoord,
-            to: e2,
+            from: e2,
+            to: betweenCoord,
           }),
           1
         );
+      } else if (board[e2.y][e2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: betweenCoord,
+          to: e2,
+        });
       }
 
       // 4
       if (board[d1.y][d1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: e1,
-            to: d1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: e1,
+          to: d1,
+        });
       }
     }
 
     // 6
     if (board[f1.y][f1.x] === BoardElement.Ball) {
-      this.possibleMoves.push({
-        from: f1,
-        to: betweenCoord,
-      });
+      this.possibleMoves.splice(
+        this.possibleMoves.indexOf({
+          from: f1,
+          to: betweenCoord,
+        }),
+        1
+      );
       const f2 = { x: toCoord.x - 2, y: toCoord.y };
 
       if (board[f2.y][f2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: f2,
-        });
-      } else if (board[f2.y][f2.x] === BoardElement.Ball) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: f2,
-            to: toCoord,
+            from: toCoord,
+            to: f2,
           }),
           1
         );
+      } else if (board[f2.y][f2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: f2,
+          to: toCoord,
+        });
       }
     }
 
@@ -1799,26 +1780,29 @@ export default class Solver {
       const g2 = { x: toCoord.x, y: toCoord.y + 2 };
 
       if (board[g2.y][g2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: g2,
+          to: toCoord,
+        });
+      } else if (board[g2.y][g2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: g2,
-            to: toCoord,
+            from: toCoord,
+            to: g2,
           }),
           1
         );
-      } else if (board[g2.y][g2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: g2,
-        });
       }
 
       // 8
       if (board[h1.y][h1.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: g1,
-          to: h1,
-        });
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: g1,
+            to: h1,
+          }),
+          1
+        );
       }
     }
 
@@ -1827,26 +1811,29 @@ export default class Solver {
       const h2 = { x: toCoord.x, y: toCoord.y - 2 };
 
       if (board[h2.y][h2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: h2,
+          to: toCoord,
+        });
+      } else if (board[h2.y][h2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: h2,
-            to: toCoord,
+            from: toCoord,
+            to: h2,
           }),
           1
         );
-      } else if (board[h2.y][h2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: h2,
-        });
       }
 
       // 7
       if (board[g1.y][g1.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: h1,
-          to: g1,
-        });
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: h1,
+            to: g1,
+          }),
+          1
+        );
       }
     }
   }
@@ -1874,29 +1861,26 @@ export default class Solver {
       const a2 = { x: fromCoord.x, y: fromCoord.y - 2 };
 
       if (board[a2.y][a2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: a2,
-          to: fromCoord,
-        });
-      } else if (board[a2.y][a2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: a2,
+            from: a2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[a2.y][a2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: a2,
+        });
       }
 
       // 2
       if (board[b1.y][b1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: a1,
-            to: b1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: a1,
+          to: b1,
+        });
       }
     }
 
@@ -1905,29 +1889,26 @@ export default class Solver {
       const b2 = { x: fromCoord.x, y: fromCoord.y + 2 };
 
       if (board[b2.y][b2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: b2,
-          to: fromCoord,
-        });
-      } else if (board[b2.y][b2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: b2,
+            from: b2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[b2.y][b2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: b2,
+        });
       }
 
       // 1
       if (board[a1.y][a1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: b1,
-            to: a1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: b1,
+          to: a1,
+        });
       }
     }
 
@@ -1936,27 +1917,24 @@ export default class Solver {
       const c2 = { x: fromCoord.x - 2, y: fromCoord.y };
 
       if (board[c2.y][c2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: c2,
-          to: fromCoord,
-        });
-      } else if (board[c2.y][c2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: fromCoord,
-            to: c2,
+            from: c2,
+            to: fromCoord,
           }),
           1
         );
+      } else if (board[c2.y][c2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: fromCoord,
+          to: c2,
+        });
       }
     } else if (board[c1.y][c1.x] === BoardElement.Empty) {
-      this.possibleMoves.splice(
-        this.possibleMoves.indexOf({
-          from: betweenCoord,
-          to: c1,
-        }),
-        1
-      );
+      this.possibleMoves.push({
+        from: betweenCoord,
+        to: c1,
+      });
     }
 
     // 4
@@ -1964,29 +1942,26 @@ export default class Solver {
       const d2 = { x: betweenCoord.x, y: betweenCoord.y - 2 };
 
       if (board[d2.y][d2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: d2,
-          to: betweenCoord,
-        });
-      } else if (board[d2.y][d2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: betweenCoord,
-            to: d2,
+            from: d2,
+            to: betweenCoord,
           }),
           1
         );
+      } else if (board[d2.y][d2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: betweenCoord,
+          to: d2,
+        });
       }
 
       // 5
       if (board[e1.y][e1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: d1,
-            to: e1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: d1,
+          to: e1,
+        });
       }
     }
 
@@ -1995,53 +1970,53 @@ export default class Solver {
       const e2 = { x: betweenCoord.x, y: betweenCoord.y + 2 };
 
       if (board[e2.y][e2.x] === BoardElement.Ball) {
-        this.possibleMoves.push({
-          from: e2,
-          to: betweenCoord,
-        });
-      } else if (board[e2.y][e2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: betweenCoord,
-            to: e2,
+            from: e2,
+            to: betweenCoord,
           }),
           1
         );
+      } else if (board[e2.y][e2.x] === BoardElement.Empty) {
+        this.possibleMoves.push({
+          from: betweenCoord,
+          to: e2,
+        });
       }
 
       // 4
       if (board[d1.y][d1.x] === BoardElement.Empty) {
-        this.possibleMoves.splice(
-          this.possibleMoves.indexOf({
-            from: e1,
-            to: d1,
-          }),
-          1
-        );
+        this.possibleMoves.push({
+          from: e1,
+          to: d1,
+        });
       }
     }
 
     // 6
     if (board[f1.y][f1.x] === BoardElement.Ball) {
-      this.possibleMoves.push({
-        from: f1,
-        to: betweenCoord,
-      });
+      this.possibleMoves.splice(
+        this.possibleMoves.indexOf({
+          from: f1,
+          to: betweenCoord,
+        }),
+        1
+      );
       const f2 = { x: toCoord.x + 2, y: toCoord.y };
 
       if (board[f2.y][f2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: f2,
-        });
-      } else if (board[f2.y][f2.x] === BoardElement.Ball) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: f2,
-            to: toCoord,
+            from: toCoord,
+            to: f2,
           }),
           1
         );
+      } else if (board[f2.y][f2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: f2,
+          to: toCoord,
+        });
       }
     }
 
@@ -2050,26 +2025,29 @@ export default class Solver {
       const g2 = { x: toCoord.x, y: toCoord.y - 2 };
 
       if (board[g2.y][g2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: g2,
+          to: toCoord,
+        });
+      } else if (board[g2.y][g2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: g2,
-            to: toCoord,
+            from: toCoord,
+            to: g2,
           }),
           1
         );
-      } else if (board[g2.y][g2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: g2,
-        });
       }
 
       // 8
       if (board[h1.y][h1.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: g1,
-          to: h1,
-        });
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: g1,
+            to: h1,
+          }),
+          1
+        );
       }
     }
 
@@ -2078,26 +2056,29 @@ export default class Solver {
       const h2 = { x: toCoord.x, y: toCoord.y + 2 };
 
       if (board[h2.y][h2.x] === BoardElement.Ball) {
+        this.possibleMoves.push({
+          from: h2,
+          to: toCoord,
+        });
+      } else if (board[h2.y][h2.x] === BoardElement.Empty) {
         this.possibleMoves.splice(
           this.possibleMoves.indexOf({
-            from: h2,
-            to: toCoord,
+            from: toCoord,
+            to: h2,
           }),
           1
         );
-      } else if (board[h2.y][h2.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: toCoord,
-          to: h2,
-        });
       }
 
       // 7
       if (board[g1.y][g1.x] === BoardElement.Empty) {
-        this.possibleMoves.push({
-          from: h1,
-          to: g1,
-        });
+        this.possibleMoves.splice(
+          this.possibleMoves.indexOf({
+            from: h1,
+            to: g1,
+          }),
+          1
+        );
       }
     }
   }
