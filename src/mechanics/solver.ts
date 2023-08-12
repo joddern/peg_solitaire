@@ -46,21 +46,15 @@ export default class Solver {
     // Check how many balls left after a move
     if (this.boardBallCount <= this.ballsThreshold) return true;
 
-    const possibleMoves: Move[] = this.gameBoard.findLegalMoves();
-
     // Check if this position is unsolvable
-    if (
-      possibleMoves.length === 0 ||
-      new Date().getTime() - this.creationTime > 10000 ||
-      (this.boardBallCount > 12 &&
-        this.unsolvablePositions.has(JSON.stringify(this.gameBoard)))
-    ) {
+    if (this.unsolvablePositions.has(JSON.stringify(this.gameBoard))) {
       return false;
     }
 
-    for (let i = 0; i < possibleMoves.length; i++) {
-      const currentMove: Move = possibleMoves[i];
+    while (this.possibleMoves.length > 0) {
+      const currentMove: Move = this.possibleMoves.pop() as Move;
       this.addMove(currentMove);
+      this.findDirectionAndUpdateOnExecuted(currentMove);
       this.boardBallCount--;
       // console.log(this.movesCounter++);
 
@@ -70,15 +64,16 @@ export default class Solver {
 
       // If the game has returned not true, then go back one step
       this.removeMove(currentMove);
+      this.findDirectionAndUpdateOnRemoved(currentMove);
       this.boardBallCount++;
     }
 
     // If all moves are checked, none returned true games, then return further
     // TODO:
     // This should also add a board to unSolvableBoard.
-    if (this.boardBallCount > 12) {
-      this.unsolvablePositions.add(JSON.stringify(this.gameBoard.getBoard()));
-    }
+
+    this.unsolvablePositions.add(JSON.stringify(this.gameBoard.getBoard()));
+
     return false;
   }
 
@@ -101,6 +96,18 @@ export default class Solver {
       this.updatePossibleMovesBasedOnExecutedMoveDown(move);
     } else if (move.to.y - move.from.y < 0) {
       this.updatePossibleMovesBasedOnExecutedMoveUp(move);
+    }
+  }
+
+  findDirectionAndUpdateOnRemoved(move: Move) {
+    if (move.to.x - move.from.x > 0) {
+      this.updatePossibleMovesBasedOnRemovedMoveRight(move);
+    } else if (move.to.x - move.from.x < 0) {
+      this.updatePossibleMovesBasedOnRemovedMoveLeft(move);
+    } else if (move.to.y - move.from.y > 0) {
+      this.updatePossibleMovesBasedOnRemovedMoveDown(move);
+    } else if (move.to.y - move.from.y < 0) {
+      this.updatePossibleMovesBasedOnRemovedMoveUp(move);
     }
   }
 
