@@ -96,6 +96,11 @@ export default class Solver {
     if (move.to.x - move.from.x > 0) {
       this.updatePossibleMovesBasedOnExecutedMoveRight(move);
     } else if (move.to.x - move.from.x < 0) {
+      this.updatePossibleMovesBasedOnExecutedMoveLeft(move);
+    } else if (move.to.y - move.from.y > 0) {
+      this.updatePossibleMovesBasedOnExecutedMoveDown(move);
+    } else if (move.to.y - move.from.y < 0) {
+      this.updatePossibleMovesBasedOnExecutedMoveUp(move);
     }
   }
 
